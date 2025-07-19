@@ -6,12 +6,12 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import openai
 
-# ✅ Carrega variáveis do .env (para desenvolvimento local)
+# ✅ Carrega variáveis do .env
 load_dotenv()
 
 app = FastAPI(title="API DicasApp", version="1.0.0")
 
-# ✅ CORS
+# ✅ Middleware CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -59,7 +59,7 @@ def get_trends():
         return {"fonte": "GNews", "pais": "Brasil", "tendencias": tendencias}
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": "Erro ao buscar tendências."}
 
 # --------------------
 # 2️⃣ Rota para gerar sugestões via IA (OpenAI)
@@ -72,7 +72,7 @@ async def gerar_sugestoes(req: EbookRequest):
     try:
         prompt = f"Crie 5 títulos criativos para eBooks sobre o tema: {req.tema}"
 
-        response = openai.ChatCompletion.create(
+        response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "Você é um especialista em marketing digital e criação de eBooks."},
@@ -83,11 +83,21 @@ async def gerar_sugestoes(req: EbookRequest):
         )
 
         sugestoes_texto = response.choices[0].message["content"]
-        sugestoes_lista = [linha.strip("- ").strip() for linha in sugestoes_texto.split("\n") if linha.strip()]
+
+        # ✅ Limpeza do texto
+        sugestoes_lista = [
+            linha.replace("-", "").replace("*", "").strip()
+            for linha in sugestoes_texto.split("\n")
+            if linha.strip()
+        ]
 
         return {"tema": req.tema, "sugestoes": sugestoes_lista}
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": "Erro ao gerar sugestões, tente novamente mais tarde."}
+    
+
+print(f"Erro ao chamar OpenAI: {str(e)}")
+
 
 
