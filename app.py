@@ -6,11 +6,12 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import openai
 
-# ✅ Carrega variáveis do .env
+# ✅ Carrega variáveis do .env (para desenvolvimento local)
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(title="API DicasApp", version="1.0.0")
 
+# ✅ CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,13 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ Pegando as chaves do .env
+# ✅ Variáveis de ambiente
 API_KEY_GNEWS = os.getenv("API_KEY_GNEWS")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.get("/")
 def home():
-    return {"status": "API rodando!"}
+    return {"status": "API rodando com FastAPI no Render!"}
 
 # --------------------
 # 1️⃣ Rota para tendências (GNews)
@@ -32,7 +33,9 @@ def home():
 @app.get("/trends")
 def get_trends():
     try:
-        url_gnews = f"https://gnews.io/api/v4/top-headlines?lang=pt&country=br&q=noticias&max=10&apikey={API_KEY_GNEWS}"
+        url_gnews = (
+            f"https://gnews.io/api/v4/top-headlines?lang=pt&country=br&q=noticias&max=10&apikey={API_KEY_GNEWS}"
+        )
         response = requests.get(url_gnews)
         data = response.json()
 
@@ -59,7 +62,7 @@ def get_trends():
         return {"error": str(e)}
 
 # --------------------
-# 2️⃣ Rota para gerar sugestões via IA
+# 2️⃣ Rota para gerar sugestões via IA (OpenAI)
 # --------------------
 class EbookRequest(BaseModel):
     tema: str
@@ -68,7 +71,7 @@ class EbookRequest(BaseModel):
 async def gerar_sugestoes(req: EbookRequest):
     try:
         prompt = f"Crie 5 títulos criativos para eBooks sobre o tema: {req.tema}"
-        
+
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -86,8 +89,5 @@ async def gerar_sugestoes(req: EbookRequest):
 
     except Exception as e:
         return {"error": str(e)}
-
-
-
 
 
