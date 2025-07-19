@@ -97,7 +97,7 @@ async def gerar_sugestoes(req: EbookRequest):
         return {"error": "Erro ao gerar sugestões, tente novamente mais tarde."}
     
 
-print(f"Erro ao chamar OpenAI: {str(e)}")
+
 
 
 
